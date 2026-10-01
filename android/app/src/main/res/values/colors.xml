@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#1B3A5C</color>
+
+    <!--
+      语义色，命名对齐 Material 3 的角色名。本工程刻意不依赖 AndroidX / Material 库，
+      所以这些 token 自己定义：values/ 是浅色，values-night/ 是深色。
+      交互色（按钮、水波纹、开关、光标）交给框架主题的 colorAccent —— Android 12+ 上它就是
+      系统 Monet 取色的强调色，不必自己再接一遍动态取色；系统没开动态取色时它退回主题默认色，
+      两侧都可用。
+    -->
+    <color name="vnotif_surface">#FAF8FC</color>
+    <color name="vnotif_surface_container">#FFFFFF</color>
+    <color name="vnotif_surface_container_low">#F1EEF5</color>
+    <color name="vnotif_on_surface">#1B1B1F</color>
+    <color name="vnotif_on_surface_variant">#5B5A62</color>
+    <color name="vnotif_outline">#DCD9E0</color>
+    <color name="vnotif_primary">#1B3A5C</color>
+    <color name="vnotif_on_primary">#FFFFFF</color>
+    <color name="vnotif_primary_container">#D7E5F8</color>
+    <color name="vnotif_on_primary_container">#0A1F33</color>
+    <color name="vnotif_ok">#1D6B3F</color>
+    <color name="vnotif_warn">#8A4B00</color>
+    <color name="vnotif_error">#B3261E</color>
+</resources>

@@ -1,0 +1,23 @@
+# --- Android / Gradle 构建产物 ---
+android/.gradle/
+android/build/
+android/app/build/
+android/.kotlin/
+android/local.properties
+*.apk
+*.aab
+*.iml
+.idea/
+
+# --- 发布产物（由 packaging/publish-apk.sh 生成，不入库）---
+dist/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# --- 杂项 ---
+*.log
+*.swp
+.DS_Store

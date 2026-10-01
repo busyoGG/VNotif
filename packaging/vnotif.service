@@ -1,0 +1,17 @@
+[Unit]
+Description=VNotif —— 桌面通知转发到安卓手机
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Dev/VNotif/pc
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m vnotif serve
+Restart=always
+RestartSec=5
+# 只读的 Python 解释器路径，避免 systemd 的 PATH 差异
+Environment=PYTHONPATH=%h/Dev/VNotif/pc
+
+[Install]
+WantedBy=default.target

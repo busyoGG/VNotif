@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色：不用纯黑（层级会消失），也不用纯白文字（刺眼）。 -->
+    <color name="vnotif_surface">#121116</color>
+    <color name="vnotif_surface_container">#1D1B21</color>
+    <color name="vnotif_surface_container_low">#18171C</color>
+    <color name="vnotif_on_surface">#E6E1E9</color>
+    <color name="vnotif_on_surface_variant">#A6A1AC</color>
+    <color name="vnotif_outline">#3A3841</color>
+    <color name="vnotif_primary">#A9C9EC</color>
+    <color name="vnotif_on_primary">#0A1F33</color>
+    <color name="vnotif_primary_container">#29486A</color>
+    <color name="vnotif_on_primary_container">#D7E5F8</color>
+    <color name="vnotif_ok">#7ED9A2</color>
+    <color name="vnotif_warn">#FFB86B</color>
+    <color name="vnotif_error">#FFB4AB</color>
+</resources>
