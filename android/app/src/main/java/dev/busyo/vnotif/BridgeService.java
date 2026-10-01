@@ -51,7 +51,7 @@ public class BridgeService extends Service {
      * build is actually running on the phone. Bump it whenever the rendering model changes — that
      * is the only way to tell "old APK still installed" apart from "new APK misbehaves".
      */
-    static final String BUILD_TAG = "report17";
+    static final String BUILD_TAG = "report19";
 
     private static final int FG_ID = 1;
     private static final String FG_CHANNEL = "vnotif_service";

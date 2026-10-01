@@ -44,7 +44,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class MainActivity extends Activity {
 
     private static final int REQ_NOTIFICATIONS = 1001;
-    private static final int LOG_TAIL = 30;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
@@ -61,9 +60,7 @@ public class MainActivity extends Activity {
     // 端点卡片
     private LinearLayout endpointBox;
     // 日志卡片
-    private TextView logView;
-    private TextView logToggle;
-    private boolean logExpanded;
+    private TextView logStatus;
 
     private final Runnable ticker = new Runnable() {
         @Override
@@ -221,31 +218,15 @@ public class MainActivity extends Activity {
 
     private View buildLogCard() {
         LinearLayout card = Ui.card(this);
+        card.addView(Ui.title(this, "日志"));
+        card.addView(Ui.caption(this, "连接、通知、前台抑制的每一步"));
 
-        LinearLayout head = Ui.row(this);
-        head.addView(Ui.title(this, "日志"));
-        head.addView(Ui.spacer(this));
-
-        logToggle = Ui.textButton(this, "展开", v -> toggleLog());
-        head.addView(logToggle);
-        head.addView(Ui.textButton(this, "清空", v -> {
-            BridgeState.clearLogs();
-            refreshDynamic();
-        }));
-        card.addView(head);
-
-        logView = Ui.mono(this, "（收起中）", 11);
-        logView.setPadding(0, Ui.dp(this, 8), 0, 0);
-        logView.setVisibility(View.GONE);
-        card.addView(logView);
+        Ui.ActionRow row = Ui.actionRow(this, "运行日志",
+                "二级界面，最新的在最上面；可清空",
+                v -> startActivity(new Intent(this, LogActivity.class)));
+        logStatus = row.status;
+        card.addView(row.row);
         return card;
-    }
-
-    private void toggleLog() {
-        logExpanded = !logExpanded;
-        logView.setVisibility(logExpanded ? View.VISIBLE : View.GONE);
-        logToggle.setText(logExpanded ? "收起" : "展开");
-        refreshDynamic();
     }
 
     private void renderEndpoints() {
@@ -315,16 +296,8 @@ public class MainActivity extends Activity {
         setPermissionState(pBattery, isIgnoringBatteryOptimizations());
         setPermissionState(pUsage, ForegroundWatcher.hasUsageAccess(this));
 
-        if (!logExpanded) {
-            return;
-        }
-        List<String> logs = BridgeState.snapshotLogs();
-        int from = Math.max(0, logs.size() - LOG_TAIL);
-        StringBuilder tail = new StringBuilder();
-        for (int i = from; i < logs.size(); i++) {
-            tail.append(logs.get(i)).append('\n');
-        }
-        logView.setText(tail.length() == 0 ? "（暂无日志）" : tail.toString());
+        int logs = BridgeState.logCount();
+        logStatus.setText(logs == 0 ? "暂无" : logs + " 条");
     }
 
     private void setPermissionState(TextView view, boolean granted) {
@@ -350,7 +323,7 @@ public class MainActivity extends Activity {
         name.setSingleLine(true);
 
         final EditText url = new EditText(this);
-        url.setHint("http://192.168.1.215:8765");
+        url.setHint("http://192.168.1.100:8765");
         url.setSingleLine(true);
         url.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
 
@@ -375,7 +348,7 @@ public class MainActivity extends Activity {
         box.addView(url);
         box.addView(token);
         box.addView(insecure);
-        box.addView(Ui.caption(this, "公网地址（如 https://frp-hat.com:37070/vnotif）在这里手填；"
+        box.addView(Ui.caption(this, "公网地址（如 https://example.com:37070/vnotif）在这里手填；"
                 + "预置的那条只是局域网地址。"));
 
         new AlertDialog.Builder(this)

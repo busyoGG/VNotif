@@ -28,7 +28,7 @@ public final class EndpointStore {
     private static final String KEY_AUTOSTART = "autostart";
 
     /** Default LAN endpoint pre-seeded on first launch. */
-    public static final String DEFAULT_URL = "http://192.168.1.215:8765";
+    public static final String DEFAULT_URL = "http://192.168.1.100:8765";
 
     public static final class Endpoint {
         public String id;

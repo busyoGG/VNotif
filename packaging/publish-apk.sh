@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 把刚构建好的 APK 发到 ~/Dev/VNotif/dist/，并把 vnotif.apk 指向它。
+# 把刚构建好的 APK 发到仓库根的 dist/，并把 vnotif.apk 指向它。
 # 手机浏览器直接开下面的链接即可下载：
-#   http://192.168.1.215:8080/apk/            （局域网，HTTP）
-#   https://192.168.1.215:8443/apk/           （局域网，自签证书）
-#   https://frp-hat.com:37070/apk/            （公网，走 dsh 那条 frp 隧道）
+#   http://192.168.1.100:8080/apk/            （局域网，HTTP）
+#   https://192.168.1.100:8443/apk/           （局域网，自签证书）
+#   https://example.com:37070/apk/            （公网，走与其它服务共用的 frp 隧道）
 #
 # 用法：
 #   packaging/publish-apk.sh                  # 用 app/build/outputs/apk/debug/app-debug.apk

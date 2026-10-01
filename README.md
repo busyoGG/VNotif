@@ -48,9 +48,9 @@ Python ≥ 3.11（本机 3.14）、`aiohttp`、`busctl`（systemd 自带）。�
 ### 部署
 
 ```bash
-cd ~/Dev/VNotif/pc
+cd <仓库>/pc
 python3 -m vnotif token                 # 首次运行会生成 ~/.config/vnotif/config.toml（含随机 token）
-cp ~/Dev/VNotif/packaging/vnotif.service ~/.config/systemd/user/
+cp <仓库>/packaging/vnotif.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now vnotif
 journalctl --user -u vnotif -f          # 看日志
@@ -90,7 +90,7 @@ body_regex = ["^音量"]          # 标题/正文命中正则即丢弃
 ### 构建
 
 ```bash
-cd ~/Dev/VNotif/android
+cd <仓库>/android
 ./gradlew assembleDebug
 # 产物：app/build/outputs/apk/debug/app-debug.apk
 ```
@@ -107,19 +107,23 @@ cd ~/Dev/VNotif/android
 
 | 场景 | 链接 |
 |---|---|
-| 手机在家 WiFi | `http://192.168.1.215:8080/apk/vnotif.apk` |
-| 手机在家 WiFi（HTTPS） | `https://192.168.1.215:8443/apk/vnotif.apk` |
-| 手机用流量 / 在外面 | `https://frp-hat.com:37070/apk/vnotif.apk`（自签证书，浏览器提示不受信 → 继续） |
+| 手机在家 WiFi | `http://192.168.1.100:8080/apk/vnotif.apk` |
+| 手机在家 WiFi（HTTPS） | `https://192.168.1.100:8443/apk/vnotif.apk` |
+| 手机用流量 / 在外面 | `https://example.com:37070/apk/vnotif.apk`（自签证书，浏览器提示不受信 → 继续） |
 | 挑历史版本 | 上面三条把结尾换成 `/apk/`，看目录列表 |
 
-nginx 里是三个 `location /apk/`（8080 / 8443 / 8446），都 alias 到 `~/Dev/VNotif/dist/`。
+nginx 里是三个 `location /apk/`（8080 / 8443 / 8446），都 alias 到仓库根的 `dist/`。
 公网那条没加 `auth_basic`（手机浏览器直接点开就能下）；APK 里不含 token，风险可接受。
 
 ### 界面
 
 主界面是卡片式的：**连接**（状态 / 端点 / 地址 / 最后消息 / 最后错误 + 启停）→ **权限与保活**（通知权限 /
 忽略电池优化 / 使用情况访问，点一行直接跳系统设置；开机自启）→ **端点**（按顺序列表，可上下移、单条测试、
-按顺序测试）→ **映射** → **日志**（默认收起）。
+按顺序测试）→ **映射** → **日志**（点进去是二级界面）。
+
+日志界面（`LogActivity`）**最新的在最上面**，最多留 200 条，右上角「清空」。刷新是事件驱动的：`BridgeState`
+每次写日志回调一次，界面侧做 250ms 防抖后重绑列表，不轮询；列表停在顶部时新日志会把内容往下推，翻到下面
+看历史时不会被拽回去。
 
 主题：`AppTheme` 三个变体只有 parent 不同（浅色 `DeviceDefault.Light` / 深色 `DeviceDefault` /
 API 29+ `DayNight`），窗口色一律引用语义色。语义色（`vnotif_surface`、`vnotif_on_surface_variant`、
@@ -173,27 +177,40 @@ FRP 公网地址作为**第二条端点**自己加，例如 `https://xxx.natfrp.
 
 ## 外网（SakuraFrp）
 
-PC 端只需监听 `0.0.0.0:8765`。**本机走的是"搭 dsh 那条隧道"的方案**：natfrp 免费套餐只有 2 条隧道，
-dsh 与 SSH 已经共用一条（`dsh-frp-demux` 按首字节分流），没有第三条留给 VNotif，所以按路径挂在同一条上。
+PC 端只需监听 `0.0.0.0:8765`。**下面这套是"跟同机另一个 web 服务共用一条隧道"的方案**：natfrp 免费套餐
+隧道名额有限，SSH 与另一个 web 服务已经占了一条（一个本地分流器按首字节把 SSH 和 TLS 分开），
+所以 VNotif 按 URL 路径挂在同一条 TLS 分支后面，而不是单独开隧道。
 
 ```
-公网 https://frp-hat.com:37070 → TCP 隧道 → 127.0.0.1:8081 (dsh-frp-demux)
+公网 https://example.com:37070 → TCP 隧道 → 127.0.0.1:8081（本地首字节分流器）
    ├─ "SSH-" 开头 → sshd:22
-   └─ 其余(TLS)   → nginx:8446 ┬ /        → dsh:8099（Basic 认证）
+   └─ 其余(TLS)   → nginx:8446 ┬ /        → 另一个 web 服务（Basic 认证）
                                └ /vnotif/ → VNotif:8765（token 认证，不加 Basic）
 ```
 
-手机端点填 `https://frp-hat.com:37070/vnotif`，勾上"允许自签证书"，token 与局域网端点相同。
+手机端点填 `https://example.com:37070/vnotif`，勾上"允许自签证书"，token 与局域网端点相同。
 
-配置在 `~/Dev/nginx/conf.d/dsh-web.conf` 的 `listen 8446 ssl` 里（`location /vnotif/`）。
-改完必须 `nginx -p ~/Dev/nginx/ -c nginx.conf -t && nginx -p ~/Dev/nginx/ -c nginx.conf -s reload`。
+nginx 侧就是在那个 HTTPS server 块里加一段 `location /vnotif/`，反代到 `http://127.0.0.1:8765/`：
+
+```nginx
+location /vnotif/ {
+    proxy_pass http://127.0.0.1:8765/;
+    proxy_buffering off;              # 长连接必须关缓冲
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+    proxy_set_header Connection "";
+    # 不要加 auth_basic：App 只带 Bearer token
+}
+```
+
+改完 `nginx -t && nginx -s reload`。
 
 自测（不碰手机就能验）：
 
 ```bash
 T=$(python3 -m vnotif token | grep -oP 'token\s*:\s*\K\S+')
-curl -sk "https://frp-hat.com:37070/vnotif/healthz?token=$T"        # 期望 {"ok": true, ...}
-curl -skN -m 5 "https://frp-hat.com:37070/vnotif/stream?token=$T"   # 期望立刻吐出 apps 行
+curl -sk "https://example.com:37070/vnotif/healthz?token=$T"        # 期望 {"ok": true, ...}
+curl -skN -m 5 "https://example.com:37070/vnotif/stream?token=$T"   # 期望立刻吐出 apps 行
 ```
 
 两个坑：① `/vnotif/` 千万别加 `auth_basic`（App 只带 Bearer，加了就永远 401）；② `/stream` 是永不结束的
@@ -203,7 +220,7 @@ curl -skN -m 5 "https://frp-hat.com:37070/vnotif/stream?token=$T"   # 期望立�
 PC 侧什么都不用改。隧道类型优先 HTTPS（隧道侧终结 TLS）；只能 TCP 时在 `config.toml` 填 `tls_cert`/`tls_key`
 自签证书，手机端点勾"允许自签证书"。
 
-注意：这台机器上 natfrp 日志里隧道频繁 `数据连接断开/EOF`，属于隧道侧抖动——首次连接失败重试一次即可，
+注意：natfrp 免费隧道在日志里常见 `数据连接断开/EOF`，属于隧道侧抖动——首次连接失败重试一次即可，
 客户端会自动重连，不必手动干预。走这条路的客户端在 PC 日志里显示为 `127.0.0.1`（frp/nginx 没透传真实 IP）。
 
 ## 排障
@@ -211,7 +228,7 @@ PC 侧什么都不用改。隧道类型优先 HTTPS（隧道侧终结 TLS）；�
 | 现象 | 先查什么 |
 |---|---|
 | 手机一直未连接 | PC 上 `curl -s 'http://127.0.0.1:8765/healthz?token=<token>'`；确认手机与 PC 同网段；手机别开 VPN（会抢走 192.168.x 路由） |
-| 公网端点连不上 | 先 `curl -sk 'https://frp-hat.com:37070/vnotif/healthz?token=<token>'`：401 是 token 错；连接超时/TLS 报错是 frp 隧道抖动，重试一次即可。手机端点地址必须自己带 `https://`，否则 App 会补成 `http://` |
+| 公网端点连不上 | 先 `curl -sk 'https://example.com:37070/vnotif/healthz?token=<token>'`：401 是 token 错；连接超时/TLS 报错是 frp 隧道抖动，重试一次即可。手机端点地址必须自己带 `https://`，否则 App 会补成 `http://` |
 | 连上了但收不到 | `python3 -m vnotif test-send`，同时看 `journalctl --user -u vnotif -f` 有没有"转发"；没有则检查黑名单 |
 | 服务 active 但**任何**通知都收不到 | `systemctl --user status vnotif` 里应有**两个** `busctl --user monitor` 子进程（一个 `interface=`、一个 `sender=`）。少了 `interface=` 那个就是采集中断 → `systemctl --user restart vnotif`。用 `python3 tools/send_big_notification.py` 可回归验证（带图标的大通知曾能把它撑死，已修） |
 | 点击通知不打开目标 App | 到映射界面选一次；确认目标 App 在手机上确实装了（未装会跳商店搜索） |
