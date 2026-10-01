@@ -1,6 +1,6 @@
 # VNotif
 
-把 KDE 桌面（Wayland）的通知**按应用**转发到安卓手机：每个桌面应用在手机上聚合成一条通知
+把 Linux 桌面通知**按应用**转发到安卓手机：每个桌面应用在手机上聚合成一条通知
 （InboxStyle 摘要，来新消息原地更新，展开可看最近 5 条），点击直接拉起你选定的手机 App。
 
 - **采集**：读会话总线上的 `org.freedesktop.Notifications.Notify`，不替换你现有的通知守护进程
@@ -8,8 +8,11 @@
 - **映射**：在手机端手动选目标 App，PC 只给一个「建议包名」
 - **端点**：可在 App 内配置多条（局域网 + 公网），按顺序尝试、自动回退
 
+不绑定桌面环境：只要实现了 freedesktop 通知规范就能用（KDE Plasma、GNOME、XFCE、Cinnamon、
+mako / dunst 等），X11 与 Wayland 会话均可。
+
 ```
-KDE 应用 ─▶ 通知守护进程 ─▶ busctl monitor ─▶ vnotif daemon (Python) ─▶ NDJSON ─▶ 手机 App
+桌面应用 ─▶ 通知守护进程 ─▶ busctl monitor ─▶ vnotif daemon (Python) ─▶ NDJSON ─▶ 手机 App
 ```
 
 ## 目录结构
@@ -26,7 +29,8 @@ KDE 应用 ─▶ 通知守护进程 ─▶ busctl monitor ─▶ vnotif daemon 
 
 ### 依赖
 
-Python ≥ 3.11、`aiohttp`、`busctl`（systemd 自带）。
+Python ≥ 3.11、`aiohttp`。采集走 `busctl --user monitor`（systemd 自带），系统里没有 `busctl` 时
+自动降级用 `dbus-monitor`（字段会少一些）。
 
 ### 部署
 
